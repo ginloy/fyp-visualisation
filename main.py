@@ -216,91 +216,87 @@ def filter_df(expr: pl.Expr, data, col: str, colType: Type):
 #                     pass
 
 
-def main():
-    dbc_css = (
-        "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-    )
-    app = Dash(
-        __name__,
-        external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css],
-        # background_callback_manager=BG_CALLBACK_MANAGER,
-        compress=True,
-        suppress_callback_exceptions=True,
-    )
-    load_figure_template("bootstrap_dark")
+dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
+app = Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP, dbc_css],
+    # background_callback_manager=BG_CALLBACK_MANAGER,
+    compress=True,
+    suppress_callback_exceptions=True,
+)
+server = app.server
+load_figure_template("bootstrap_dark")
 
-    types = DF.select("id1").unique().collect().to_series().sort().to_list()
+types = DF.select("id1").unique().collect().to_series().sort().to_list()
 
-    app.layout = dbc.Container(
-        className="dbc dbc-ag-grid d-flex flex-column vh-100",
-        children=[
-            selectors(),
-            dbc.Row(
-                class_name="mt-2",
-                children=[
-                    dbc.Col(
-                        children=dcc.Tabs(
-                            persistence=True,
-                            id="tabs",
-                            value="graphs-tab",
-                            children=[
-                                dcc.Tab(
-                                    label="Graphs",
-                                    value="graphs-tab",
-                                    children=[
-                                        dbc.Row(
-                                            dbc.Col(
-                                                [
-                                                    dbc.Label("Type:"),
-                                                    dcc.Dropdown(
-                                                        types,
-                                                        "FRF",
-                                                        id="graphs-type-selector",
-                                                        clearable=False,
-                                                        searchable=True,
-                                                        persistence=True,
-                                                    ),
-                                                ],
-                                                width=3,
-                                            ),
-                                            class_name="mt-2",
-                                        )
-                                    ],
-                                ),
-                                dcc.Tab(label="Raw Data", value="data-tab"),
-                            ],
-                        ),
+app.layout = dbc.Container(
+    className="dbc dbc-ag-grid d-flex flex-column vh-100",
+    children=[
+        selectors(),
+        dbc.Row(
+            class_name="mt-2",
+            children=[
+                dbc.Col(
+                    children=dcc.Tabs(
+                        persistence=True,
+                        id="tabs",
+                        value="graphs-tab",
+                        children=[
+                            dcc.Tab(
+                                label="Graphs",
+                                value="graphs-tab",
+                                children=[
+                                    dbc.Row(
+                                        dbc.Col(
+                                            [
+                                                dbc.Label("Type:"),
+                                                dcc.Dropdown(
+                                                    types,
+                                                    "FRF",
+                                                    id="graphs-type-selector",
+                                                    clearable=False,
+                                                    searchable=True,
+                                                    persistence=True,
+                                                ),
+                                            ],
+                                            width=3,
+                                        ),
+                                        class_name="mt-2",
+                                    )
+                                ],
+                            ),
+                            dcc.Tab(label="Raw Data", value="data-tab"),
+                        ],
                     ),
-                ],
-            ),
-            dbc.Row(
-                className="flex-grow-1 overflow-auto mt-2 w-100",
-                align="center",
-                justify="center",
-                children=dbc.Col(
-                    id="tab-contents",
-                    className="h-100",
                 ),
+            ],
+        ),
+        dbc.Row(
+            className="flex-grow-1 overflow-auto mt-2 w-100",
+            align="center",
+            justify="center",
+            children=dbc.Col(
+                id="tab-contents",
+                className="h-100",
             ),
-            # dbc.Row(
-            #     [
-            #         dag.AgGrid(
-            #             rowData=temp.to_dicts(),  # type: ignore
-            #             columnDefs=[
-            #                 {"field": i, "filter": True, "floatingFilter": True}
-            #                 for i in temp.columns
-            #             ],
-            #             id="main-table",
-            #             dashGridOptions=dict(pagination=True),
-            #         ),
-            #     ]
-            # ),
-            # html.Div([], id="graph-tab"),
-        ],
-    )
-
-    app.run(debug=True)
+        ),
+        # dbc.Row(
+        #     [
+        #         dag.AgGrid(
+        #             rowData=temp.to_dicts(),  # type: ignore
+        #             columnDefs=[
+        #                 {"field": i, "filter": True, "floatingFilter": True}
+        #                 for i in temp.columns
+        #             ],
+        #             id="main-table",
+        #             dashGridOptions=dict(pagination=True),
+        #         ),
+        #     ]
+        # ),
+        # html.Div([], id="graph-tab"),
+    ],
+)
 
 
 if __name__ == "__main__":
-    main()
+    app.run()
