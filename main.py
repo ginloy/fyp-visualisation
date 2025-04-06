@@ -9,11 +9,11 @@ import plotly.graph_objs as go
 from functools import cache
 import polars.selectors as cs
 
-from globals import DF, BG_CALLBACK_MANAGER
+from globals import DF
 
 
 def selectors() -> dbc.Row:
-    fields = ["config", "accel_pos"]
+    fields = ["id1", "config", "accel_pos"]
     col_lst: List[dbc.Col] = []
     for field in fields:
         series = DF.select(field).unique().collect().to_series().sort()
@@ -27,6 +27,7 @@ def selectors() -> dbc.Row:
                         id=f"selector-{field}",
                         searchable=True,
                         persistence=True,
+                        clearable=False if field == "id1" else True,
                     ),
                 ],
                 width=3,
@@ -74,7 +75,7 @@ def get_data(config: str, accel_pos: str, id: str) -> Sequence[Dict[Any, Any]]:
     Output("tab-contents", "children"),
     Input("selector-config", "value"),
     Input("selector-accel_pos", "value"),
-    Input("graphs-type-selector", "value"),
+    Input("selector-id1", "value"),
     Input("tabs", "value"),
     running=[
         (
@@ -94,7 +95,11 @@ def update_graphs(config, accel_pos, id, tab):
     print("update_Graphs")
     if tab == "graphs-tab":
         return [
-            dbc.Row(dbc.Col([dbc.Label(id), dcc.Graph(figure=fig)]))
+            dbc.Row(
+                dbc.Col(
+                    [dbc.Label(id), dcc.Graph(figure=fig, style=dict(height="70vh"))]
+                )
+            )
             for id, fig in get_graphs(config, accel_pos, id)
         ]
     elif tab == "data-tab":
@@ -230,9 +235,9 @@ load_figure_template("bootstrap_dark")
 types = DF.select("id1").unique().collect().to_series().sort().to_list()
 
 app.layout = dbc.Container(
+    fluid=True,
     className="dbc dbc-ag-grid d-flex flex-column vh-100",
     children=[
-        selectors(),
         dbc.Row(
             class_name="mt-2",
             children=[
@@ -245,25 +250,7 @@ app.layout = dbc.Container(
                             dcc.Tab(
                                 label="Graphs",
                                 value="graphs-tab",
-                                children=[
-                                    dbc.Row(
-                                        dbc.Col(
-                                            [
-                                                dbc.Label("Type:"),
-                                                dcc.Dropdown(
-                                                    types,
-                                                    "FRF",
-                                                    id="graphs-type-selector",
-                                                    clearable=False,
-                                                    searchable=True,
-                                                    persistence=True,
-                                                ),
-                                            ],
-                                            width=3,
-                                        ),
-                                        class_name="mt-2",
-                                    )
-                                ],
+                                children=selectors(),
                             ),
                             dcc.Tab(label="Raw Data", value="data-tab"),
                         ],
@@ -272,9 +259,9 @@ app.layout = dbc.Container(
             ],
         ),
         dbc.Row(
-            className="flex-grow-1 overflow-auto mt-2 w-100",
-            align="center",
-            justify="center",
+            className="flex-grow-1 overflow-auto mt-2",
+            # align="center",
+            # justify="center",
             children=dbc.Col(
                 id="tab-contents",
                 className="h-100",
@@ -299,4 +286,4 @@ app.layout = dbc.Container(
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
