@@ -24,6 +24,7 @@ def selectors() -> dbc.Row:
                     dbc.Label(field),
                     dcc.Dropdown(
                         options,
+                        value="FRF" if field == "id1" else None,
                         id=f"selector-{field}",
                         searchable=True,
                         persistence=True,
