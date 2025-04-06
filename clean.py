@@ -24,7 +24,7 @@ df = (
         np.arctan(pl.col("data_imag") / pl.col("data_real"))
         .cast(pl.Float64)
         .alias("data_phase"),
-        pl.col("id2").str.extract(r"(\w)\(\w\)$", group_index=1).alias("axis"),
+        pl.col("id2").str.extract(r"([+-]\w)\(\w\)$", group_index=1).alias("axis"),
         pl.col("id2").str.extract(r"^\w+\(([E_R]+)\)", group_index=1).alias("E/R"),
         pl.col("ordinate_axis_units_lab").alias("units"),
     )
@@ -40,7 +40,7 @@ input_fft = fftdf.filter(pl.col("E/R") == "E").select(
 output_fft = fftdf.filter(pl.col("E/R") == "R").select(
     "x", pl.struct("data_real", "data_imag").alias("data"), "axis"
 )
-axes = ["X", "Y", "Z"]
+axes = ["+X", "+Y", "+Z"]
 x = input_fft.select("x").collect().to_series().to_numpy()
 input_data = input_fft.select("data").collect().to_series().to_numpy()
 input_data = np.vectorize(complex)(input_data[:, 0], input_data[:, 1])
