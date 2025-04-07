@@ -5,12 +5,17 @@ FROM ghcr.io/astral-sh/uv:debian
 WORKDIR /app
 
 # Copy your project files
-COPY . .
+COPY assets ./
+COPY data.pq ./
+COPY *.py ./
+COPY pyproject.toml ./
+COPY uv.lock ./
 
 # # Install dependencies (uv creates a virtual environment automatically)
 # RUN uv venv && \
 #   uv pip install gunicorn && \
 #   uv pip install .
+RUN uv sync
 
 # Set environment variables (optional)
 # ENV PYTHONUNBUFFERED=1
