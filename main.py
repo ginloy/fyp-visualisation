@@ -47,12 +47,12 @@ def get_graphs(config: str, accel_pos: str, id: str) -> List[Tuple[str, go.Figur
     if id is not None:
         df = df.filter(pl.col("id1") == id)
 
-    dfs = df.collect().partition_by("id1", as_dict=True)
-    for grp, df in dfs.items():
+    dfs = df.collect().group_by("id1")
+    for grp, df in dfs:
         fig = px.line(
             df,
             x="x",
-            y="data_mag",
+            y="data_mag" if grp[0] != "Time" else "data_real",
             color="axis",
             facet_col="config",
             facet_row="accel_pos",
