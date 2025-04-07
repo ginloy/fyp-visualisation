@@ -1,5 +1,5 @@
 from typing import Dict, List, Sequence, Tuple, Any, Type
-from dash import Dash, html, callback, dash_table, dcc, Input, Output, no_update
+from dash import Dash, html, callback, dcc, Input, Output, no_update
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 from dash_bootstrap_templates import load_figure_template
@@ -8,6 +8,8 @@ import plotly.express as px
 import plotly.graph_objs as go
 from functools import cache
 import polars.selectors as cs
+import numpy as np
+import scipy.signal as ss
 
 from globals import DF
 
@@ -51,8 +53,49 @@ def selectors() -> dbc.Row:
     return dbc.Row(col_lst, class_name="px mt-2 gy-4")
 
 
+def make_graph_with_peaks(df: pl.DataFrame, n: int, title: str):
+    def get_peaks(arr: np.ndarray) -> np.ndarray:
+        peak_idxs, _ = ss.find_peaks(arr)
+        prominences = ss.peak_prominences(arr, peak_idxs)[0]
+        top_idxs = np.argsort(prominences)[: -n - 1 : -1]
+        return peak_idxs[top_idxs]
+
+    fig = go.Figure()
+    colors = px.colors.qualitative.Plotly
+    for i, (group, dff) in enumerate(df.group_by("axis", maintain_order=True)):
+        axis = group[0]
+        peak_idxs = get_peaks(dff["data_mag"].to_numpy())
+        x = dff["x"]
+        y = dff["data_mag"]
+        peaks_x = x[peak_idxs]
+        peaks_y = y[peak_idxs]
+        fig.add_scatter(
+            x=x, y=y, name=axis, legendgroup=f"{i * 2}", line=dict(color=colors[i * 2])
+        )
+        fig.add_scatter(
+            x=peaks_x,
+            y=peaks_y,
+            name=f"{axis} peaks",
+            marker=dict(symbol="x", size=8, color=colors[i * 2 + 1]),
+            mode="markers",
+            legendgroup=f"{i * 2 + 1}",
+        )
+        for x, y in zip(peaks_x, peaks_y):
+            fig.add_scatter(
+                x=[x, x],
+                y=[0, y],
+                line=dict(dash="dash", color=colors[i * 2 + 1]),
+                legendgroup=f"{i * 2 + 1}",
+                showlegend=False,
+            )
+    fig.update_layout(title=dict(text=title))
+
+    return fig
+
+
 def get_graphs(config: str, accel_pos: str, id: str) -> List[Tuple[str, go.Figure]]:
     df = DF
+    need_peaks = ["FFT", "FRF"]
     figs: List[Tuple[str, go.Figure]] = []
     if config is not None:
         df = df.filter(pl.col("config") == config)
@@ -63,6 +106,9 @@ def get_graphs(config: str, accel_pos: str, id: str) -> List[Tuple[str, go.Figur
 
     dfs = df.collect().group_by("id1")
     for grp, df in dfs:
+        if grp[0] in need_peaks and config is not None and accel_pos is not None:
+            figs.append((grp[0], make_graph_with_peaks(df, 5, grp[0])))  # type: ignore
+            continue
         fig = px.line(
             df,
             x="x",
