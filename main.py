@@ -34,7 +34,21 @@ def selectors() -> dbc.Row:
                 width=3,
             )
         )
-    return dbc.Row(col_lst, class_name="px mt-2")
+    col_lst.append(
+        dbc.Col(
+            html.Img(
+                src=app.get_asset_url("config-info.png"), style=dict(height="15vh")
+            ),
+            width="auto",
+        )
+    )
+    col_lst.append(
+        dbc.Col(
+            html.Img(src=app.get_asset_url("axis-info.png"), style=dict(height="15vh")),
+            width="auto",
+        ),
+    )
+    return dbc.Row(col_lst, class_name="px mt-2 gy-4")
 
 
 def get_graphs(config: str, accel_pos: str, id: str) -> List[Tuple[str, go.Figure]]:
