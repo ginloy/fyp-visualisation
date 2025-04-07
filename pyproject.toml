@@ -15,4 +15,5 @@ dependencies = [
     "seaborn>=0.13.2",
     "dash-bootstrap-templates>=2.1.0",
     "gunicorn>=23.0.0",
+    "scipy>=1.15.2",
 ]
